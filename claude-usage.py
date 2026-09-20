@@ -32,7 +32,7 @@ if CLAUDE_DIR != os.path.realpath(DEFAULT_CLAUDE_DIR):
 SCAN_CACHE = os.path.join(CACHE_DIR, "scan.json")
 USAGE_CACHE = os.path.join(CACHE_DIR, "usage.json")
 
-SCAN_CACHE_VERSION = 3
+SCAN_CACHE_VERSION = 4
 USAGE_URL = "https://api.anthropic.com/api/oauth/usage"
 
 
@@ -95,16 +95,18 @@ def scan_file(path):
                 usage.get("cache_creation_input_tokens") or 0,
             ]
 
-            # Streaming writes one line per content block of the same message.
-            # They repeat the message's input and cache counts, but only the
-            # last line carries the final output_tokens, so the message is
-            # counted once and its token totals are corrected by the difference.
+            # A message can appear on several lines: streaming writes one per
+            # content block, growing output_tokens as it goes, and resuming a
+            # session copies earlier messages into the new transcript with the
+            # usage zeroed. Neither is a second billed call, so the message is
+            # counted once and every field keeps its largest value.
             key = (msg.get("id"), rec.get("requestId"))
             prev = seen.get(key) if key[0] else None
             if prev is not None:
                 day_key, prev_model, prev_counts = prev
-                delta = [counts[i] - prev_counts[i] for i in range(4)]
-                seen[key] = (day_key, prev_model, counts)
+                merged = [max(prev_counts[i], counts[i]) for i in range(4)]
+                delta = [merged[i] - prev_counts[i] for i in range(4)]
+                seen[key] = (day_key, prev_model, merged)
                 if not any(delta):
                     continue
                 m = days[day_key]["models"][prev_model]

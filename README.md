@@ -32,7 +32,7 @@ DMS Settings > Plugins > Claude Usage:
 
 - Removed: always-on automatic refresh (now opt-in), multi-profile support (CCS / ccp / custom), LiteLLM cost estimates, and the exchange-rate lookup.
 - The backend is now a Python 3 standard-library script. It no longer needs `jq` or `curl`.
-- Messages are de-duplicated by `message.id + requestId`, keeping the **last** line of each message. Streaming writes one line per content block: they repeat the input and cache counts, and only the last one carries the final `output_tokens`. Counting every line inflates the totals (1.80× over 315 local transcripts: 71,460 assistant rows for 38,675 distinct messages); keeping the first line instead undercounts output tokens by 12.6%.
+- Messages are de-duplicated by `message.id + requestId`, keeping the **largest** value of each usage field. A message appears on several lines for two reasons: streaming writes one line per content block, growing `output_tokens` as it goes, and resuming a session copies earlier messages into the new transcript with the usage zeroed. Counting every line inflates the totals 1.80x (71,460 assistant rows for 38,675 distinct messages here); keeping the first line loses 12.6% of output tokens; keeping the last line lets a zeroed copy wipe out a counted message, which cost more than it recovered (-4,988,208 tokens vs -3,761,726 for first-wins across 315 transcripts).
 - The scan cache is incremental: a file is rescanned only when its size or mtime changes. Stats for transcripts that Claude Code has deleted (`cleanupPeriodDays`) are kept, so heatmap history is not lost.
 - If the OAuth token has expired, the plugin does not refresh it (refreshing would rotate Claude Code's own refresh token). Run `claude` once, then click refresh again.
 
