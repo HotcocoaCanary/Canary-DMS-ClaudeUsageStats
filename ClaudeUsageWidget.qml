@@ -652,7 +652,7 @@ PluginComponent {
         try {
             out = JSON.parse(text);
         } catch (e) {
-            console.warn("canaryClaudeUsage: bad script output", e);
+            console.warn("claudeUsageStats: bad script output", e);
             return;
         }
         days = out.days || {};

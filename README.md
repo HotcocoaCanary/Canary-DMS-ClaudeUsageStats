@@ -1,4 +1,4 @@
-# Claude Usage And Stats
+# Claude Usage and Stats
 
 A trimmed-down [DMS](https://github.com/AvengeMedia/DankMaterialShell) bar widget for Claude Code usage, based on [titeya/dms-claudecode](https://github.com/titeya/dms-claudecode).
 
@@ -39,13 +39,12 @@ DMS Settings > Plugins > Claude Usage:
 ## Installation
 
 ```bash
-git clone https://github.com/HotcocoaCanary/Canary-DMS-Plugins.git
-ln -s "$PWD/Canary-DMS-Plugins/ClaudeUsage" ~/.config/DankMaterialShell/plugins/canaryClaudeUsage
+git clone https://github.com/HotcocoaCanary/Canary-DMS-ClaudeUsageStats.git ~/.config/DankMaterialShell/plugins/claudeUsageStats
 dms ipc call plugin-scan scan
-dms ipc call plugins enable canaryClaudeUsage
+dms ipc call plugins enable claudeUsageStats
 ```
 
-Then add `canaryClaudeUsage` to the bar under DMS Settings > Bar.
+Then add `claudeUsageStats` to the bar under DMS Settings > Bar.
 
 ## Debugging
 

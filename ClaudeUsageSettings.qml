@@ -7,7 +7,7 @@ import "translations.js" as Tr
 
 PluginSettings {
     id: root
-    pluginId: "canaryClaudeUsage"
+    pluginId: "claudeUsageStats"
 
     property string lang: (SessionData.locale || Qt.locale().name).split(/[_-]/)[0]
     function tr(key) {
