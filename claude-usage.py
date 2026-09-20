@@ -32,7 +32,7 @@ if CLAUDE_DIR != os.path.realpath(DEFAULT_CLAUDE_DIR):
 SCAN_CACHE = os.path.join(CACHE_DIR, "scan.json")
 USAGE_CACHE = os.path.join(CACHE_DIR, "usage.json")
 
-SCAN_CACHE_VERSION = 2
+SCAN_CACHE_VERSION = 3
 USAGE_URL = "https://api.anthropic.com/api/oauth/usage"
 
 
@@ -69,7 +69,7 @@ def scan_file(path):
     """
     days = {}
     sessions = {}
-    seen = set()
+    seen = {}
     version = ""
     last_ts = ""
     with open(path, "rb") as fh:
@@ -88,23 +88,41 @@ def scan_file(path):
             model = msg.get("model") or "unknown"
             if not usage or model == "<synthetic>":
                 continue
-            # Streaming writes one line per content block, each carrying the same usage.
-            key = (msg.get("id"), rec.get("requestId"))
-            if key[0] and key in seen:
-                continue
-            seen.add(key)
-
-            ts = rec.get("timestamp") or ""
-            dt = parse_ts(ts)
-            if not dt:
-                continue
             counts = [
                 usage.get("input_tokens") or 0,
                 usage.get("output_tokens") or 0,
                 usage.get("cache_read_input_tokens") or 0,
                 usage.get("cache_creation_input_tokens") or 0,
             ]
-            d = days.setdefault(dt.strftime("%Y-%m-%d"), {"models": {}, "hours": {}, "s": []})
+
+            # Streaming writes one line per content block of the same message.
+            # They repeat the message's input and cache counts, but only the
+            # last line carries the final output_tokens, so the message is
+            # counted once and its token totals are corrected by the difference.
+            key = (msg.get("id"), rec.get("requestId"))
+            prev = seen.get(key) if key[0] else None
+            if prev is not None:
+                day_key, prev_model, prev_counts = prev
+                delta = [counts[i] - prev_counts[i] for i in range(4)]
+                seen[key] = (day_key, prev_model, counts)
+                if not any(delta):
+                    continue
+                m = days[day_key]["models"][prev_model]
+                for i in range(4):
+                    m[i] += delta[i]
+                sess = rec.get("sessionId")
+                if sess in sessions:
+                    sessions[sess][3] += sum(delta)
+                continue
+
+            ts = rec.get("timestamp") or ""
+            dt = parse_ts(ts)
+            if not dt:
+                continue
+            day_key = dt.strftime("%Y-%m-%d")
+            if key[0]:
+                seen[key] = (day_key, model, counts)
+            d = days.setdefault(day_key, {"models": {}, "hours": {}, "s": []})
             m = d["models"].setdefault(model, [0, 0, 0, 0, 0])
             for i in range(4):
                 m[i] += counts[i]
