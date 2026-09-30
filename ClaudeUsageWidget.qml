@@ -15,6 +15,11 @@ PluginComponent {
     function tr(key) {
         return Tr.tr(key, lang);
     }
+
+    // Chart and axis labels: derived from the Theme size so they follow the font scale
+    readonly property real fontSizeTiny: Math.round(Theme.fontSizeSmall * 0.85)
+    readonly property real fontSizeMicro: Math.round(Theme.fontSizeSmall * 0.75)
+    readonly property var rangeValues: [0, 30, 7]
     // Weekday labels in display order (depends on the week start setting)
     readonly property var dayLabels: {
         var labels = lang === "zh" ? ["一", "二", "三", "四", "五", "六", "日"] : ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
@@ -801,8 +806,8 @@ PluginComponent {
         property real fraction: 0
         property color fill: Theme.primary
         width: parent ? parent.width : 0
-        height: 4
-        radius: 2
+        height: Theme.spacingXS
+        radius: height / 2
         color: Theme.surfaceVariant
 
         Rectangle {
@@ -832,42 +837,6 @@ PluginComponent {
             font.weight: Font.DemiBold
             color: Theme.primary
             elide: Text.ElideRight
-        }
-    }
-
-    component Segmented: Row {
-        property var options: []
-        property int current: 0
-        property bool dimmed: false
-        signal picked(int value)
-        spacing: Theme.spacingXS
-        opacity: dimmed ? 0.35 : 1
-
-        Repeater {
-            model: options
-            delegate: Rectangle {
-                readonly property bool selected: current === modelData.value
-                width: segLabel.implicitWidth + Theme.spacingM * 1.5
-                height: 28
-                radius: 14
-                color: selected && !dimmed ? Theme.primary : Theme.surfaceContainerHigh
-
-                StyledText {
-                    id: segLabel
-                    anchors.centerIn: parent
-                    text: modelData.label
-                    font.pixelSize: Theme.fontSizeSmall
-                    font.weight: selected ? Font.Medium : Font.Normal
-                    color: selected && !dimmed ? Theme.primaryText : Theme.surfaceVariantText
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    enabled: !dimmed
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: picked(modelData.value)
-                }
-            }
         }
     }
 
@@ -990,46 +959,33 @@ PluginComponent {
                         }
                     }
 
-                    Segmented {
+                    DankButtonGroup {
                         id: tabBar
-                        options: [
-                            {
-                                value: 0,
-                                label: root.tr("Usage")
-                            },
-                            {
-                                value: 1,
-                                label: root.tr("Stats")
-                            },
-                            {
-                                value: 2,
-                                label: root.tr("Models")
-                            }
-                        ]
-                        current: root.activeTab
-                        onPicked: value => root.activeTab = value
+                        model: [root.tr("Usage"), root.tr("Stats"), root.tr("Models")]
+                        currentIndex: root.activeTab
+                        size: "small"
+                        checkEnabled: false
+                        buttonHeight: Theme.buttonHeightXXS
+                        onSelectionChanged: (index, selected) => {
+                            if (selected)
+                                root.activeTab = index;
+                        }
                     }
 
-                    // Range applies to both Stats and Models; dimmed on the Usage tab
-                    Segmented {
+                    // Range applies to both Stats and Models; disabled on the Usage tab
+                    DankButtonGroup {
                         anchors.right: parent.right
-                        dimmed: root.activeTab === 0
-                        options: [
-                            {
-                                value: 0,
-                                label: root.tr("All")
-                            },
-                            {
-                                value: 30,
-                                label: root.tr("30d")
-                            },
-                            {
-                                value: 7,
-                                label: root.tr("7d")
-                            }
-                        ]
-                        current: root.statsRange
-                        onPicked: value => root.statsRange = value
+                        model: [root.tr("All"), root.tr("30d"), root.tr("7d")]
+                        currentIndex: root.rangeValues.indexOf(root.statsRange)
+                        size: "small"
+                        checkEnabled: false
+                        buttonHeight: Theme.buttonHeightXXS
+                        enabled: root.activeTab !== 0
+                        opacity: enabled ? 1 : 0.35
+                        onSelectionChanged: (index, selected) => {
+                            if (selected)
+                                root.statsRange = root.rangeValues[index];
+                        }
                     }
                 }
 
@@ -1188,7 +1144,7 @@ PluginComponent {
                                 StyledText {
                                     anchors.centerIn: parent
                                     text: root.hasSynced ? Math.round(root.sevenDayUtil) + "%" : "--"
-                                    font.pixelSize: 14
+                                    font.pixelSize: Theme.fontSizeMedium
                                     font.weight: Font.DemiBold
                                     color: Theme.surfaceText
                                 }
@@ -1282,7 +1238,7 @@ PluginComponent {
 
                                 StyledText {
                                     text: modelData.resets_at ? root.resetText(modelData.resets_at) : root.tr("No reset time")
-                                    font.pixelSize: 11
+                                    font.pixelSize: Theme.fontSizeSmall
                                     color: Theme.surfaceVariantText
                                 }
                             }
@@ -1371,14 +1327,14 @@ PluginComponent {
                                 id: monthRow
                                 x: heatArea.labelWidth
                                 width: parent.width - x
-                                height: 14
+                                height: root.fontSizeTiny + Theme.spacingXS
 
                                 Repeater {
                                     model: root.heatmap.months
                                     delegate: StyledText {
                                         x: modelData.week * heatArea.step
                                         text: modelData.label
-                                        font.pixelSize: 10
+                                        font.pixelSize: root.fontSizeTiny
                                         color: Theme.surfaceVariantText
                                     }
                                 }
@@ -1389,7 +1345,7 @@ PluginComponent {
                                 delegate: StyledText {
                                     y: monthRow.height + 4 + modelData * heatArea.step + (root.heatCell - height) / 2
                                     text: root.dayLabels[modelData]
-                                    font.pixelSize: 9
+                                    font.pixelSize: root.fontSizeMicro
                                     color: Theme.surfaceVariantText
                                 }
                             }
@@ -1435,7 +1391,7 @@ PluginComponent {
                         // Fixed-height footer: detail on the left, legend always on the right
                         Item {
                             width: parent.width
-                            height: 16
+                            height: root.fontSizeTiny + Theme.spacingXS + Theme.spacingXXS
 
                             StyledText {
                                 anchors.left: parent.left
@@ -1465,7 +1421,7 @@ PluginComponent {
 
                                 StyledText {
                                     text: root.tr("Less")
-                                    font.pixelSize: 10
+                                    font.pixelSize: root.fontSizeTiny
                                     color: Theme.surfaceVariantText
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
@@ -1481,7 +1437,7 @@ PluginComponent {
                                 }
                                 StyledText {
                                     text: root.tr("More")
-                                    font.pixelSize: 10
+                                    font.pixelSize: root.fontSizeTiny
                                     color: Theme.surfaceVariantText
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
@@ -1597,14 +1553,14 @@ PluginComponent {
 
                         Item {
                             width: parent.width
-                            height: 12
+                            height: root.fontSizeTiny + Theme.spacingXXS
 
                             Repeater {
                                 model: [0, 6, 12, 18, 23]
                                 delegate: StyledText {
                                     x: modelData * (hourRow.width + 2) / 24
                                     text: modelData
-                                    font.pixelSize: 10
+                                    font.pixelSize: root.fontSizeTiny
                                     color: Theme.surfaceVariantText
                                 }
                             }
@@ -1715,7 +1671,7 @@ PluginComponent {
                                         StyledText {
                                             id: dayLabel
                                             text: root.dayLabels[index]
-                                            font.pixelSize: 11
+                                            font.pixelSize: Theme.fontSizeSmall
                                             color: index === root.hoveredDay || index === root.todayIndex ? Theme.primary : Theme.surfaceVariantText
                                             anchors.horizontalCenter: parent.horizontalCenter
                                         }
@@ -1800,7 +1756,7 @@ PluginComponent {
                             onPaint: {
                                 var ctx = getContext("2d");
                                 ctx.reset();
-                                ctx.font = "10px sans-serif";
+                                ctx.font = root.fontSizeTiny + "px \"" + Theme.fontFamily + "\"";
 
                                 // Horizontal grid with y labels
                                 ctx.lineWidth = 1;
@@ -1939,7 +1895,7 @@ PluginComponent {
                                     StyledText {
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         text: root.hoveredModel >= 0 ? root.formatTokens(root.rangeStats.models[root.hoveredModel].total) : "tokens"
-                                        font.pixelSize: 10
+                                        font.pixelSize: root.fontSizeTiny
                                         color: Theme.surfaceVariantText
                                     }
                                 }
