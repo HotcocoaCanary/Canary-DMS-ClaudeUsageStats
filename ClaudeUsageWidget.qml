@@ -4,6 +4,7 @@ import Quickshell.Io
 import qs.Common
 import qs.Services
 import qs.Widgets
+import qs.DCommon.Widgets
 import qs.Modules.Plugins
 import "translations.js" as Tr
 
@@ -923,7 +924,7 @@ PluginComponent {
             showCloseButton: true
 
             headerActions: Component {
-                DankRefreshButton {
+                DRefreshButton {
                     busy: syncProcess.running
                     tooltipText: root.tr("Sync /usage")
                     onClicked: root.syncUsage()
@@ -959,7 +960,7 @@ PluginComponent {
                         }
                     }
 
-                    DankButtonGroup {
+                    DButtonGroup {
                         id: tabBar
                         model: [root.tr("Usage"), root.tr("Stats"), root.tr("Models")]
                         currentIndex: root.activeTab
@@ -973,7 +974,7 @@ PluginComponent {
                     }
 
                     // Range applies to both Stats and Models; disabled on the Usage tab
-                    DankButtonGroup {
+                    DButtonGroup {
                         anchors.right: parent.right
                         model: [root.tr("All"), root.tr("30d"), root.tr("7d")]
                         currentIndex: root.rangeValues.indexOf(root.statsRange)
@@ -1002,7 +1003,7 @@ PluginComponent {
                         anchors.margins: Theme.spacingS
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        DIcon {
                             id: errorIcon
                             name: "error"
                             size: 16
