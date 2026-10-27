@@ -1,6 +1,6 @@
 # Claude Usage and Stats
 
-A trimmed-down [DMS](https://github.com/AvengeMedia/DankMaterialShell) bar widget for Claude Code usage, based on [titeya/dms-claudecode](https://github.com/titeya/dms-claudecode).
+A trimmed-down [Dux Shell](https://github.com/duxlabs-dev/dux-shell) bar widget for Claude Code usage, based on [titeya/dms-claudecode](https://github.com/titeya/dms-claudecode).
 
 ![screenshot](screenshot.png)
 
@@ -15,7 +15,7 @@ The popout has three tabs. The tabs and the time range (All / 30d / 7d) sit on t
 
 ## Configuration
 
-DMS Settings > Plugins > Claude Usage:
+Settings > Plugins > Claude Usage:
 
 | Setting | Default | Notes |
 |---|---|---|
@@ -39,12 +39,12 @@ DMS Settings > Plugins > Claude Usage:
 ## Installation
 
 ```bash
-git clone https://github.com/HotcocoaCanary/Canary-DMS-ClaudeUsageStats.git ~/.config/DankMaterialShell/plugins/claudeUsageStats
+git clone https://github.com/HotcocoaCanary/Canary-DMS-ClaudeUsageStats.git ~/.config/dms/plugins/claudeUsageStats
 dms ipc call plugin-scan scan
 dms ipc call plugins enable claudeUsageStats
 ```
 
-Then add `claudeUsageStats` to the bar under DMS Settings > Bar.
+Then add `claudeUsageStats` to the bar under Settings > Bar.
 
 ## Debugging
 
